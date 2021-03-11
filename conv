@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Uso do convert:
+# convert [-size widhtxheight] [-depth X] img.rgba novaimag.tiff
+# convert [-size widhtxheight] [-depth X] img.tiff novaimag.rgba
+
+if [ ! $1 ]; then 
+	echo Uso: $0 prog.rgba
+	exit
+fi
+
+echo Generating $1.tiff...
+convert -size 512x512 -depth 8 $1 $1.tiff
