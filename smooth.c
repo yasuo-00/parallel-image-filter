@@ -25,7 +25,7 @@ Speedup:
 
 #define WIDTH  512
 #define HEIGHT 512
-#define NTHREADS 1
+#define NTHREADS 8
 
 //matriz original recebe 2 colunas e linhas adicionais para tratamento da borda
 int mr [WIDTH+2][HEIGHT+2];
@@ -57,6 +57,9 @@ void filtro(int linha, int coluna){
 
 	//iStencil,jStencil para percorrer a matriz stencil
 	for(int iStencil=linha-1;iStencil<linha+2;iStencil++){
+		if(linha-1==-1){
+			printf("%d\n",iStencil-(linha-1));
+		}
 		for(int jStencil=coluna-1;jStencil<coluna+2;jStencil++){
 			//a soma dentro dos indices é parar garantir que o indice esteja entre 0 e 2
 			stencilR[iStencil-(linha-1)][jStencil-(coluna-1)] = mr[iStencil][jStencil];
@@ -66,13 +69,14 @@ void filtro(int linha, int coluna){
 			sumR+=stencilR[iStencil-(linha-1)][jStencil-(coluna-1)]; 
 			sumG+=stencilG[iStencil-(linha-1)][jStencil-(coluna-1)];
 			sumB+=stencilB[iStencil-(linha-1)][jStencil-(coluna-1)];
+
 		}
 	}
 	
 	avgR=sumR/9;
 	avgG=sumG/9;
 	avgB=sumB/9;
-	
+
 	//escrita na matriz resultante
 	mr2[linha][coluna]=avgR;
 	mg2[linha][coluna]=avgG;
@@ -84,11 +88,10 @@ void *smooth(void *pos){
 	//desestrutura a entrada para pegar as linhas da thread
 	int linhaInicial =((struct range_matriz *) pos)->linhaInicial;
 	int linhaFinal =((struct range_matriz *) pos)->linhaFinal;
-	printf("LINHA INICIAL %d    LINHA FINAL %d\n", linhaInicial, linhaFinal);
 	//iMatriz,jMatriz para percorrer a matriz
-	for(int iMatriz=linhaInicial+1; iMatriz<=linhaFinal; iMatriz++){
+	for(int iMatriz=linhaInicial; iMatriz<=linhaFinal; iMatriz++){
 		//mudar para fazer cada thread chamar uma funcao que cuidara dos stencils do elemento central
-		for(int jMatriz=1;jMatriz<=512;jMatriz++){
+		for(int jMatriz=1;jMatriz<512;jMatriz++){
 			filtro(iMatriz,jMatriz);		
 		}
 	}			
@@ -135,9 +138,8 @@ main(int argc, char **argv)
 		printf("Erro na leitura do arquivo\n");		
 		exit(0);
 	}
-	printf("Tamanho da imagem: %d x %d\n",ncol,nlin);
+	printf("Tamanho da imagem: %d x %d\n",ncol,nlin); */
 	nlin=ncol=512;
-	 */
 
 	// zerar as matrizes (4 bytes, mas usaremos 1 por pixel)
 	// void *memset(void *s, int c, size_t n);
@@ -159,8 +161,8 @@ main(int argc, char **argv)
 	// ordem de leitura dos bytes (componentes do pixel) depende se o formato
 	// é little ou big endian
 	// Assumindo little endian
-	for(i=1;i<=nlin;i++) {
-		for(j=1;j<=ncol;j++) {
+	for(i=1;i<nlin+1;i++) {
+		for(j=1;j<ncol+1;j++) {
 			read(fdi,&mr[i][j],1);
 			read(fdi,&mg[i][j],1);
 			read(fdi,&mb[i][j],1);
@@ -172,8 +174,8 @@ main(int argc, char **argv)
 	// aplicar filtro (estêncil)
 	// repetir para mr2, mg2, mb2, ma2
 	// obtém tempo e consumo de CPU antes da aplicação do filtro
-	gettimeofday(&inic,0);
-	getrusage(RUSAGE_SELF, &r1);
+/* 	gettimeofday(&inic,0);
+	getrusage(RUSAGE_SELF, &r1); */
 	//aplicar filtro paralelizado aqui
 	//cria uma estrutura que contem a linha inicial e final que uma thread deve operar
 	struct range_matriz *thread_range = (struct range_matriz*)malloc(sizeof(struct range_matriz)*NTHREADS);
@@ -182,8 +184,9 @@ main(int argc, char **argv)
 	for(int i=0;i<NTHREADS;i++){
 		//pega as linhas através do num_linhas/num_threads
 		//tratar divisoes nao inteiras
-		(thread_range+i)->linhaInicial=(int)(i*((HEIGHT)/NTHREADS)); //printf("ELEMENTO %d", (i+1)*64);
+		(thread_range+i)->linhaInicial=(i*((HEIGHT)/NTHREADS)); //printf("ELEMENTO %d", (i+1)*64);
 		(thread_range+i)->linhaFinal=(i+1)*((HEIGHT)/NTHREADS);
+		//printf("LINHA INICIAL %d,  LINHA FINAL %d\n", (thread_range+i)->linhaInicial, (thread_range+i)->linhaFinal);
 		//criação das threads
 		status = pthread_create(&threads[i], NULL, smooth, (void *)(thread_range+i));
 		if (status) {
@@ -204,13 +207,13 @@ main(int argc, char **argv)
 	}
 
 	// obtém tempo e consumo de CPU depois da aplicação do filtro
-	gettimeofday(&fim,0);
+	/* gettimeofday(&fim,0);
 	getrusage(RUSAGE_SELF, &r2);
 	printf("\nElapsed time:%f sec\tUser time:%f sec\tSystem time:%f sec\n",
 	(fim.tv_sec+fim.tv_usec/1000000.) - (inic.tv_sec+inic.tv_usec/1000000.),
 	(r2.ru_utime.tv_sec+r2.ru_utime.tv_usec/1000000.) - (r1.ru_utime.tv_sec+r1.ru_utime.tv_usec/1000000.),
 	(r2.ru_stime.tv_sec+r2.ru_stime.tv_usec/1000000.) - (r1.ru_stime.tv_sec+r1.ru_stime.tv_usec/1000000.));
-
+ */
 
 	// tratar: linhas 0, 1, n, n-1; colunas 0,1,n,n-1
 	// for
@@ -232,8 +235,6 @@ main(int argc, char **argv)
 			write(fdo,&ma2[i][j],1);
 		}
 	}
-
-	free(thread_range);
 	close(fdo);
 	
 	return 0;
