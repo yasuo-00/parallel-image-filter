@@ -25,7 +25,7 @@ Speedup:
 
 #define WIDTH  512
 #define HEIGHT 512
-#define NTHREADS 8
+#define NTHREADS 4
 
 //matriz original recebe 2 colunas e linhas adicionais para tratamento da borda
 int mr [WIDTH+2][HEIGHT+2];
@@ -57,9 +57,6 @@ void filtro(int linha, int coluna){
 
 	//iStencil,jStencil para percorrer a matriz stencil
 	for(int iStencil=linha-1;iStencil<linha+2;iStencil++){
-		if(linha-1==-1){
-			printf("%d\n",iStencil-(linha-1));
-		}
 		for(int jStencil=coluna-1;jStencil<coluna+2;jStencil++){
 			//a soma dentro dos indices é parar garantir que o indice esteja entre 0 e 2
 			stencilR[iStencil-(linha-1)][jStencil-(coluna-1)] = mr[iStencil][jStencil];
@@ -139,6 +136,7 @@ main(int argc, char **argv)
 		exit(0);
 	}
 	printf("Tamanho da imagem: %d x %d\n",ncol,nlin); */
+
 	nlin=ncol=512;
 
 	// zerar as matrizes (4 bytes, mas usaremos 1 por pixel)
@@ -174,8 +172,8 @@ main(int argc, char **argv)
 	// aplicar filtro (estêncil)
 	// repetir para mr2, mg2, mb2, ma2
 	// obtém tempo e consumo de CPU antes da aplicação do filtro
-/* 	gettimeofday(&inic,0);
-	getrusage(RUSAGE_SELF, &r1); */
+	gettimeofday(&inic,0);
+	getrusage(RUSAGE_SELF, &r1);
 	//aplicar filtro paralelizado aqui
 	//cria uma estrutura que contem a linha inicial e final que uma thread deve operar
 	struct range_matriz *thread_range = (struct range_matriz*)malloc(sizeof(struct range_matriz)*NTHREADS);
@@ -207,13 +205,13 @@ main(int argc, char **argv)
 	}
 
 	// obtém tempo e consumo de CPU depois da aplicação do filtro
-	/* gettimeofday(&fim,0);
+	gettimeofday(&fim,0);
 	getrusage(RUSAGE_SELF, &r2);
 	printf("\nElapsed time:%f sec\tUser time:%f sec\tSystem time:%f sec\n",
 	(fim.tv_sec+fim.tv_usec/1000000.) - (inic.tv_sec+inic.tv_usec/1000000.),
 	(r2.ru_utime.tv_sec+r2.ru_utime.tv_usec/1000000.) - (r1.ru_utime.tv_sec+r1.ru_utime.tv_usec/1000000.),
 	(r2.ru_stime.tv_sec+r2.ru_stime.tv_usec/1000000.) - (r1.ru_stime.tv_sec+r1.ru_stime.tv_usec/1000000.));
- */
+
 
 	// tratar: linhas 0, 1, n, n-1; colunas 0,1,n,n-1
 	// for
