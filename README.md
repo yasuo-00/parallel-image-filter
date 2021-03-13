@@ -2,10 +2,10 @@
 
 Simple image filter with threads using neighborhood average on pixel for parallel and distributed programming class.
 
-#Input<br/>
+# Input<br/>
 512x512 image.rgba
 
-#Output<br/>
+# Output<br/>
 image.rgba.new
 
 To run:
