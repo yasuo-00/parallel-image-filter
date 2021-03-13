@@ -1,6 +1,6 @@
-# Image Filter
+# Parallel Image Filter
 
-Simple image filter using neighborhood average on pixel for parallel and distributed programming class.
+Simple image filter with threads using neighborhood average on pixel for parallel and distributed programming class.
 
 #Input<br/>
 512x512 image.rgba
