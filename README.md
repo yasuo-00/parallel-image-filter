@@ -6,7 +6,9 @@ Simple image filter with threads using neighborhood average on pixel for paralle
 512x512 image.rgba
 
 # Output<br/>
-image.rgba.new
+image.rgba.new  
+
+# How To Use
 
 To run:
 ```
